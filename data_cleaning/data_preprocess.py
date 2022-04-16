@@ -1,22 +1,21 @@
 import random
 
-AE = 'data/DRUG-AE.rel'
-DOSE = 'data/DRUG-DOSE.rel'
+AE = '../data/DRUG-AE.rel'
+NEG = '../data/ADE-NEG.txt'
 OUTPUT = 'cleaned.txt'
 
 data = []
-def process(path, is_AE):
-    with open(path, 'r') as fr:
-        for line in fr:
-            pubmed_id, text = line.strip().split('|')[:2]
-            if is_AE:
-                data.append(''.join([text, '>>><<<', str(1)]))
-            else:
-                data.append(''.join([text, '>>><<<', str(0)]))
 
+with open(AE, 'r') as fr:
+    for line in fr:
+        pubmed_id, text = line.strip().split('|')[:2]
+        data.append(''.join([text, '>>><<<', str(1)]))
 
-process(AE, is_AE=True)
-process(DOSE, is_AE=False)
+with open(NEG, 'r') as fr:
+    for line in fr:
+        pubmed_id, neg = line.strip().split(' ')[:2]
+        text = ' '.join(line.strip().split(' ')[2:])
+        data.append(''.join([text, '>>><<<', str(0)]))
 
 random.shuffle(data)
 
