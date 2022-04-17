@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 import torch.nn as nn
 from dataset import Dataset
 from model import LSTM
+from sklearn.metrics import precision_recall_fscore_support, roc_auc_score
 
 
 
@@ -38,33 +39,40 @@ def train(model, train_loader, val_loader, n_epochs, optimizer, criterion):
 
         train_loss = train_loss / len(train_loader)
         print('Epoch: {} \t Training Loss: {:.6f}'.format(epoch + 1, train_loss))
-        p, r, f, roc_auc = eval(model, val_loader)
-        print('Epoch: {} \t Validation p: {:.2f}, r:{:.2f}, f: {:.2f}, roc_auc: {:.2f}'.format(epoch + 1, p, r, f,
-                                                                                               roc_auc))
-    return round(roc_auc, 2)
-
-
-from sklearn.metrics import precision_recall_fscore_support, roc_auc_score
+    eval(model, val_loader)
+        # p, r, f, roc_auc = eval(model, val_loader)
+        # print('Epoch: {} \t Validation p: {:.2f}, r:{:.2f}, f: {:.2f}, roc_auc: {:.2f}'.format(epoch + 1, p, r, f,
+        #                                                                                        roc_auc))
+    # return round(roc_auc, 2)
 
 
 def eval(model, val_loader):
-
+    val_loss = 0
     model.eval()
     y_pred = torch.LongTensor()
-    y_score = torch.Tensor()
     y_true = torch.LongTensor()
     model.eval()
-    for x, masks, rev_x, rev_masks, y in val_loader:
-        y_logit = model(x, masks, rev_x, rev_masks)
-        y_hat = y_logit >= 5
 
-        y_score = torch.cat((y_score, y_logit.detach().to('cpu')), dim=0)
-        y_pred = torch.cat((y_pred, y_hat.detach().to('cpu')), dim=0)
+    for x, y in val_loader:
+        y_hat = model(x)
+        y_hat = y_hat.to(torch.float32)
+        y = y.to(torch.float32)
+
+        y_hat2 = (y_hat > 0.5).float() * 1
+
+        y_pred = torch.cat((y_pred,  y_hat2.detach().to('cpu')), dim=0)
         y_true = torch.cat((y_true, y.detach().to('cpu')), dim=0)
 
+        loss = criterion(y_hat, y)
+
+        loss.backward()
+        val_loss += loss.item()
+
+    val_loss = val_loss / len(val_loader)
+    print(val_loss)
+
     p, r, f, _ = precision_recall_fscore_support(y_true, y_pred, average='binary')
-    roc_auc = roc_auc_score(y_true, y_score)
-    return p, r, f, roc_auc
+    print(p,r,f)
 
 
 

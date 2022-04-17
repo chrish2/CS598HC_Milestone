@@ -38,7 +38,7 @@ class Dataset(Dataset):
                  data_path,
                  vocab_size=100,
                  lang=None,
-                 val_size=0.1,
+                 val_size=0.5,
                  seed=42,
                  is_val=False,
                  shuffle=True):
