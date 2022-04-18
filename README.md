@@ -2,4 +2,4 @@
 CS598Milestone
 
 
-Python index.py
+- How to run: python index.py
