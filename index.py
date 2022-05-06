@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 import torch.nn as nn
 from dataset import Dataset
 from model import LSTM
-from sklearn.metrics import precision_recall_fscore_support, roc_auc_score
+# from sklearn.metrics import precision_recall_fscore_support, roc_auc_score
 
 
 
@@ -18,7 +18,7 @@ def train(model, train_loader, val_loader, n_epochs, optimizer, criterion):
     for epoch in range(n_epochs):
         model.train()
         train_loss = 0
-        print(len(train_loader.dataset))
+        # print(len(train_loader.dataset))
         for x, y in train_loader:
             optimizer.zero_grad()
             # print(x)
@@ -28,9 +28,10 @@ def train(model, train_loader, val_loader, n_epochs, optimizer, criterion):
             # print(type(y))
             # print(type(y_hat))
 
-            y_hat = y_hat.to(torch.float32)
+            y_hat = y_hat.to(torch.float32).squeeze()
             y = y.to(torch.float32)
-
+            # print(y.size())
+            # print(y_hat.size())
             loss = criterion(y_hat, y)
 
             loss.backward()
@@ -39,7 +40,12 @@ def train(model, train_loader, val_loader, n_epochs, optimizer, criterion):
 
         train_loss = train_loss / len(train_loader)
         print('Epoch: {} \t Training Loss: {:.6f}'.format(epoch + 1, train_loss))
-    eval(model, val_loader)
+        print(y_hat)
+
+        print((y_hat > torch.quantile(y_hat, 0.75)).float() * 1)
+        print(y)
+
+    # eval(model, val_loader)
         # p, r, f, roc_auc = eval(model, val_loader)
         # print('Epoch: {} \t Validation p: {:.2f}, r:{:.2f}, f: {:.2f}, roc_auc: {:.2f}'.format(epoch + 1, p, r, f,
         #                                                                                        roc_auc))
@@ -51,14 +57,14 @@ def eval(model, val_loader):
     model.eval()
     y_pred = torch.LongTensor()
     y_true = torch.LongTensor()
-    model.eval()
 
     for x, y in val_loader:
         y_hat = model(x)
-        y_hat = y_hat.to(torch.float32)
+        y_hat = y_hat.to(torch.float32).squeeze()
         y = y.to(torch.float32)
 
-        y_hat2 = (y_hat > 0.5).float() * 1
+
+        y_hat2 = (y_hat > 0.475).float() * 1
 
         y_pred = torch.cat((y_pred,  y_hat2.detach().to('cpu')), dim=0)
         y_true = torch.cat((y_true, y.detach().to('cpu')), dim=0)
@@ -67,20 +73,22 @@ def eval(model, val_loader):
 
         loss.backward()
         val_loss += loss.item()
-
+    print(y_hat)
+    print(y_true)
     val_loss = val_loss / len(val_loader)
+
     print(val_loss)
 
-    p, r, f, _ = precision_recall_fscore_support(y_true, y_pred, average='binary')
-    print(p,r,f)
+    # p, r, f, _ = precision_recall_fscore_support(y_true, y_pred, average='binary')
+    # print(p,r,f)
 
 
 
 if __name__ == '__main__':
     batch_size = 20
-    train_dataset = Dataset(data_path='./data/cleaned2.txt', is_val=False)
-    print(len(train_dataset.data))
-    val_dataset = Dataset(data_path='./data/cleaned2.txt', is_val=True)
+    train_dataset = Dataset(data_path='./data/cleaned.txt', is_val=False)
+    # print(len(train_dataset.data))
+    val_dataset = Dataset(data_path='./data/cleaned.txt', is_val=True)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size)
@@ -91,7 +99,8 @@ if __name__ == '__main__':
     # load the loss function
     criterion = nn.BCELoss()
     # load the optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
 
-    n_epochs = 5
+    n_epochs = 20
     train(model, train_loader, val_loader, n_epochs, optimizer, criterion)
+
