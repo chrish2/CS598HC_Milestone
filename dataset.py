@@ -112,7 +112,10 @@ def tokens_to_seq(tokens, tok_to_idx, max_length):
             idx = tok_to_idx['<UNK>']
 
 
-        seq[pos] = idx
+        try:
+            seq[pos] = idx
+        except:
+            a=1
 
     return seq
 
