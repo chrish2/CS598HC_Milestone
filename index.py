@@ -11,7 +11,6 @@ from torch.utils.data import DataLoader
 import torch.nn as nn
 from dataset import Dataset
 
-from BiLSTM import BiLSTM
 from LSTM import LSTM
 from BiLSTM_Attention import BiLSTM_Attention
 # from sklearn.metrics import precision_recall_fscore_support, roc_auc_score
