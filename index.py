@@ -28,7 +28,7 @@ def train(model, train_loader, val_loader, n_epochs, optimizer, criterion):
             # print(type(y))
             # print(type(y_hat))
 
-            y_hat = y_hat.to(torch.float32)
+            y_hat = y_hat.to(torch.float32).squeeze()
             y = y.to(torch.float32)
 
             loss = criterion(y_hat, y)
@@ -53,13 +53,16 @@ def eval(model, val_loader):
     y_true = torch.LongTensor()
     model.eval()
 
+    ass = []
     for x, y in val_loader:
+
         y_hat = model(x)
         y_hat = y_hat.to(torch.float32)
         y = y.to(torch.float32)
 
-        y_hat2 = (y_hat > 0.5).float() * 1
-
+        y_hat2 = (y_hat > 0.485).float() * 1
+        y_hat2 = y_hat2
+        ass.append(y_hat)
         y_pred = torch.cat((y_pred,  y_hat2.detach().to('cpu')), dim=0)
         y_true = torch.cat((y_true, y.detach().to('cpu')), dim=0)
 
@@ -68,12 +71,13 @@ def eval(model, val_loader):
         loss.backward()
         val_loss += loss.item()
 
+    print(ass)
+
     val_loss = val_loss / len(val_loader)
     print(val_loss)
 
     p, r, f, _ = precision_recall_fscore_support(y_true, y_pred, average='binary')
-    print(p,r,f)
-
+    print('{:.2f}, r:{:.2f}, f: {:.2f}',p,r,f)
 
 
 if __name__ == '__main__':
@@ -93,5 +97,5 @@ if __name__ == '__main__':
     # load the optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-    n_epochs = 5
+    n_epochs = 2
     train(model, train_loader, val_loader, n_epochs, optimizer, criterion)
