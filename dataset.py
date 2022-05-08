@@ -99,10 +99,6 @@ class Dataset(Dataset):
         return input_seq, label
 
 
-
-
-
-
 def tokens_to_seq(tokens, tok_to_idx, max_length):
     seq = torch.zeros(max_length).long()
     for pos, token in enumerate(tokens):
@@ -115,4 +111,3 @@ def tokens_to_seq(tokens, tok_to_idx, max_length):
         seq[pos] = idx
 
     return seq
-
